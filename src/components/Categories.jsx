@@ -1,114 +1,189 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const Categories = () => {
-  const [categories, setCategories] = useState([
-    {
-      id: 1,
-      name: "Drinks",
-      image:
-        "https://images.unsplash.com/photo-1600891963934-9609c2c19b0d?w=500",
-    },
-    {
-      id: 2,
-      name: "Appetizers",
-      image:
-        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500",
-    },
-    {
-      id: 3,
-      name: "Main Course",
-      image:
-        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500",
-    },
-  ]);
+export default function AdminCategories() {
+  const [categories, setCategories] = useState([]);
+  const [newCategory, setNewCategory] = useState({ title: "", image: "" });
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({ title: "", image: "" });
 
-  const [newCategory, setNewCategory] = useState({
-    name: "",
-    image: "",
-  });
+  const BASE_URL =
+    "https://restro-a8f84-default-rtdb.firebaseio.com/categories";
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setNewCategory({
-        ...newCategory,
-        image: URL.createObjectURL(file), // preview only
+  // Fetch all categories
+  useEffect(() => {
+    fetch(`${BASE_URL}.json`)
+      .then((res) => res.json())
+      .then((data) => {
+        const loaded = Object.entries(data || {}).map(([key, value]) => ({
+          firebaseId: key,
+          ...value,
+        }));
+        setCategories(loaded);
       });
-    }
+  }, []);
+
+  // Add Category
+  const addCategory = async () => {
+    if (!newCategory.title || !newCategory.image) return;
+
+    const category = { ...newCategory, id: Date.now() };
+    const res = await fetch(`${BASE_URL}.json`, {
+      method: "POST",
+      body: JSON.stringify(category),
+    });
+
+    const data = await res.json(); // Firebase returns { name: "-Nxyz123" }
+    const firebaseId = data.name;
+
+    setCategories([...categories, { ...category, firebaseId }]);
+    setNewCategory({ title: "", image: "" });
   };
 
-  const handleAddCategory = () => {
-    if (!newCategory.name || !newCategory.image) return;
-    setCategories([
-      ...categories,
-      {
-        id: Date.now(),
-        name: newCategory.name,
-        image: newCategory.image,
-      },
-    ]);
-    setNewCategory({ name: "", image: "" });
+  // Delete Category
+  const deleteCategory = async (firebaseId) => {
+    await fetch(`${BASE_URL}/${firebaseId}.json`, { method: "DELETE" });
+    setCategories(categories.filter((c) => c.firebaseId !== firebaseId));
   };
 
-  const handleDelete = (id) => {
-    setCategories(categories.filter((cat) => cat.id !== id));
+  // Update Category
+  const updateCategory = async (firebaseId, updated) => {
+    await fetch(`${BASE_URL}/${firebaseId}.json`, {
+      method: "PATCH",
+      body: JSON.stringify(updated),
+    });
+    setCategories(
+      categories.map((c) =>
+        c.firebaseId === firebaseId ? { ...c, ...updated } : c
+      )
+    );
+  };
+
+  // Start editing
+  const startEdit = (c) => {
+    setEditingId(c.firebaseId);
+    setEditData({ title: c.title, image: c.image });
+  };
+
+  // Save editing
+  const saveEdit = () => {
+    updateCategory(editingId, editData);
+    setEditingId(null);
+    setEditData({ title: "", image: "" });
   };
 
   return (
-    <div className="p-6 flex-1">
-      {/* Add New Category Form */}
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="font-semibold mb-4">Add New Category</h2>
-        <div className="space-y-4">
-          <label>Category Name </label>
-          <input
-            type="text"
-            placeholder="Enter category name"
-            value={newCategory.name}
-            onChange={(e) =>
-              setNewCategory({ ...newCategory, name: e.target.value })
-            }
-            className="w-full border rounded px-3 py-2"
-          />
-          <input type="file" onChange={handleFileChange} />
-          <button
-            onClick={handleAddCategory}
-            className="bg-purple-600 text-white px-4 py-2 rounded w-full hover:bg-purple-700"
-          >
-            Add Category
-          </button>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 p-6">
+      <h2 className="text-3xl font-bold text-gray-800 mb-6">
+        ⚙️ Manage Categories
+      </h2>
+
+      {/* Add Form */}
+      <div className="flex gap-2 mb-6">
+        <input
+          type="text"
+          placeholder="Title"
+          value={newCategory.title}
+          onChange={(e) =>
+            setNewCategory({ ...newCategory, title: e.target.value })
+          }
+          className="border rounded px-3 py-2 flex-1"
+        />
+        <input
+          type="text"
+          placeholder="Image URL"
+          value={newCategory.image}
+          onChange={(e) =>
+            setNewCategory({ ...newCategory, image: e.target.value })
+          }
+          className="border rounded px-3 py-2 flex-1"
+        />
+        <button
+          onClick={addCategory}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Add
+        </button>
       </div>
 
-      {/* Categories List */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((cat) => (
-          <div
-            key={cat.id}
-            className="bg-white shadow rounded-lg overflow-hidden"
-          >
-            <img
-              src={cat.image}
-              alt={cat.name}
-              className="h-40 w-full object-cover"
-            />
-            <div className="p-4">
-              <h3 className="font-medium">{cat.name}</h3>
-              <div className="flex gap-4 text-sm mt-2">
-                <button className="text-blue-600 hover:underline">Edit</button>
-                <button
-                  onClick={() => handleDelete(cat.id)}
-                  className="text-red-600 hover:underline"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Table */}
+      <table className="w-full bg-white shadow rounded">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="p-3 text-left">Title</th>
+            <th className="p-3">Image</th>
+            <th className="p-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {categories.map((c) => (
+            <tr key={c.firebaseId} className="border-b">
+              <td className="p-3">
+                {editingId === c.firebaseId ? (
+                  <input
+                    value={editData.title}
+                    onChange={(e) =>
+                      setEditData({ ...editData, title: e.target.value })
+                    }
+                    className="border px-2 py-1 w-full"
+                  />
+                ) : (
+                  c.title
+                )}
+              </td>
+              <td className="p-3">
+                {editingId === c.firebaseId ? (
+                  <input
+                    value={editData.image}
+                    onChange={(e) =>
+                      setEditData({ ...editData, image: e.target.value })
+                    }
+                    className="border px-2 py-1 w-full"
+                  />
+                ) : (
+                  <img
+                    src={c.image}
+                    alt={c.title}
+                    className="w-20 h-12 object-cover rounded"
+                  />
+                )}
+              </td>
+              <td className="p-3">
+                {editingId === c.firebaseId ? (
+                  <>
+                    <button
+                      onClick={saveEdit}
+                      className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="ml-2 px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => deleteCategory(c.firebaseId)}
+                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => startEdit(c)}
+                      className="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Edit
+                    </button>
+                  </>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
-};
-
-export default Categories;
+}
