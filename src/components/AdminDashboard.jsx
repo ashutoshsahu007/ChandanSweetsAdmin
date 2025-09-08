@@ -34,7 +34,10 @@ export default function AdminDashboard({ onLogout }) {
             ))}
           </ul>
         </div>
-        <button className="bg-red-600 text-white font-medium py-2 m-4 rounded hover:bg-red-700">
+        <button
+          onClick={onLogout}
+          className="bg-red-600 text-white font-medium py-2 m-4 rounded hover:bg-red-700"
+        >
           Logout
         </button>
       </div>
@@ -47,21 +50,6 @@ export default function AdminDashboard({ onLogout }) {
         {active === "Categories" && <Categories />}
         {active === "Recipes" && <Recipes />}
         {active === "Orders" && <Orders />}
-      </div>
-
-      {/* other contents  */}
-      <div>
-        <header className="flex justify-between p-4 bg-orange-600 text-white">
-          <h1 className="text-xl font-bold">🍽️ Admin Panel</h1>
-          <button
-            onClick={onLogout}
-            className="bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600"
-          >
-            Logout
-          </button>
-        </header>
-
-        {/* Your existing Categories, Recipes, Orders components here */}
       </div>
     </div>
   );

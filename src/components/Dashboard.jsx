@@ -1,37 +1,91 @@
-import React from "react";
-import { Home, Tag, BookOpen, ClipboardList, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Tag, BookOpen, ClipboardList, Clock } from "lucide-react";
 
-const Dashboard = () => {
-  const stats = [
+const BASE_URL = "https://restro-a8f84-default-rtdb.firebaseio.com";
+
+export default function Dashboard() {
+  const [stats, setStats] = useState({
+    categories: 0,
+    recipes: 0,
+    totalOrders: 0,
+    pendingOrders: 0,
+  });
+
+  const fetchStats = async () => {
+    try {
+      // fetch all in parallel
+      const [catRes, recRes, ordRes] = await Promise.all([
+        fetch(`${BASE_URL}/categories.json`),
+        fetch(`${BASE_URL}/recipes.json`),
+        fetch(`${BASE_URL}/orders.json`),
+      ]);
+
+      const [categories, recipes, orders] = await Promise.all([
+        catRes.json(),
+        recRes.json(),
+        ordRes.json(),
+      ]);
+
+      const categoriesCount = categories ? Object.keys(categories).length : 0;
+      const recipesCount = recipes ? Object.keys(recipes).length : 0;
+
+      let totalOrders = 0;
+      let pendingOrders = 0;
+
+      if (orders) {
+        const ordersArr = Object.values(orders);
+        totalOrders = ordersArr.length;
+        pendingOrders = ordersArr.filter(
+          (o) => String(o.status).toLowerCase() === "pending" || !o.status // treat empty as pending
+        ).length;
+      }
+
+      setStats({
+        categories: categoriesCount,
+        recipes: recipesCount,
+        totalOrders,
+        pendingOrders,
+      });
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const cards = [
     {
       title: "Categories",
-      count: 4,
+      count: stats.categories,
       icon: <Tag className="text-gray-600" size={20} />,
       link: "View all categories",
     },
     {
       title: "Recipes",
-      count: 4,
+      count: stats.recipes,
       icon: <BookOpen className="text-gray-600" size={20} />,
       link: "View all recipes",
     },
     {
       title: "Total Orders",
-      count: 5,
+      count: stats.totalOrders,
       icon: <ClipboardList className="text-gray-600" size={20} />,
       link: "View all orders",
     },
     {
       title: "Pending Orders",
-      count: 1,
+      count: stats.pendingOrders,
       icon: <Clock className="text-gray-600" size={20} />,
       link: "View pending orders",
     },
   ];
+
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
+        {cards.map((stat, index) => (
           <div
             key={index}
             className="bg-white shadow rounded-lg p-4 flex flex-col"
@@ -52,6 +106,4 @@ const Dashboard = () => {
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import AdminLogin from "./AdminLogin"; // login page
 import AdminDashboard from "./AdminDashboard";
 

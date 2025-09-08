@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 export default function AdminLogin({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -20,6 +20,7 @@ export default function AdminLogin({ onLogin }) {
       );
 
       const data = await res.json();
+
       if (res.ok) {
         localStorage.setItem("adminToken", data.idToken);
         localStorage.setItem("adminEmail", data.email);
