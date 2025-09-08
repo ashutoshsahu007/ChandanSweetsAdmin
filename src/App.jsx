@@ -1,8 +1,6 @@
+import AuthWrapper from "./components/AuthWrapper";
 import "./App.css";
-import AdminDashboard from "./components/AdminDashboard";
 
-const App = () => {
-  return <AdminDashboard />;
-};
-
-export default App;
+export default function App() {
+  return <AuthWrapper />;
+}

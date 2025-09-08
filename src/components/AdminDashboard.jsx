@@ -5,7 +5,7 @@ import Categories from "./Categories";
 import Recipes from "./Recipes";
 import Orders from "./Orders";
 
-const AdminDashboard = () => {
+export default function AdminDashboard({ onLogout }) {
   const [active, setActive] = useState("Dashboard");
 
   return (
@@ -48,8 +48,21 @@ const AdminDashboard = () => {
         {active === "Recipes" && <Recipes />}
         {active === "Orders" && <Orders />}
       </div>
+
+      {/* other contents  */}
+      <div>
+        <header className="flex justify-between p-4 bg-orange-600 text-white">
+          <h1 className="text-xl font-bold">🍽️ Admin Panel</h1>
+          <button
+            onClick={onLogout}
+            className="bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600"
+          >
+            Logout
+          </button>
+        </header>
+
+        {/* Your existing Categories, Recipes, Orders components here */}
+      </div>
     </div>
   );
-};
-
-export default AdminDashboard;
+}
