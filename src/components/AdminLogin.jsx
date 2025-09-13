@@ -48,6 +48,7 @@ export default function AdminLogin({ onLogin }) {
           type="email"
           placeholder="Email"
           value={email}
+          required
           onChange={(e) => setEmail(e.target.value)}
           className="w-full p-3 mb-4 border rounded-lg"
         />
@@ -55,6 +56,7 @@ export default function AdminLogin({ onLogin }) {
           type="password"
           placeholder="Password"
           value={password}
+          required
           onChange={(e) => setPassword(e.target.value)}
           className="w-full p-3 mb-4 border rounded-lg"
         />

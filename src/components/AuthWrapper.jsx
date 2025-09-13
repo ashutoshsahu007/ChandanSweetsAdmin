@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import AdminLogin from "./AdminLogin"; // login page
+import AdminLogin from "./AdminLogin";
 import AdminDashboard from "./AdminDashboard";
 
 export default function AuthWrapper() {
