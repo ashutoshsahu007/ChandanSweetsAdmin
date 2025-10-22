@@ -1,4 +1,3 @@
-// src/components/Recipes.jsx
 import React, { useEffect, useState } from "react";
 
 const FIREBASE_URL = "https://restro-a8f84-default-rtdb.firebaseio.com";

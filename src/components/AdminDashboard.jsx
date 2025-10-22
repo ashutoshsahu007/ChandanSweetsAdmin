@@ -1,12 +1,20 @@
 import { Home, Tag, BookOpen, ClipboardList, Clock } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dashboard from "./Dashboard";
 import Categories from "./Categories";
 import Recipes from "./Recipes";
 import Orders from "./Orders";
 
 export default function AdminDashboard({ onLogout }) {
-  const [active, setActive] = useState("Dashboard");
+  const [active, setActive] = useState(() => {
+    // read from localStorage on initial render
+    return localStorage.getItem("activeTab") || "Dashboard";
+  });
+
+  useEffect(() => {
+    // update localStorage whenever active changes
+    localStorage.setItem("activeTab", active);
+  }, [active]);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -36,7 +44,7 @@ export default function AdminDashboard({ onLogout }) {
         </div>
         <button
           onClick={onLogout}
-          className="bg-red-600 text-white font-medium py-2 m-4 rounded hover:bg-red-700"
+          className="bg-red-600 cursor-pointer text-white font-medium py-2 m-4 rounded hover:bg-red-700"
         >
           Logout
         </button>
@@ -46,7 +54,7 @@ export default function AdminDashboard({ onLogout }) {
       <div className="flex-1 p-6 max-h-screen overflow-auto">
         <h1 className="text-2xl font-bold mb-6">{active}</h1>
 
-        {active === "Dashboard" && <Dashboard />}
+        {active === "Dashboard" && <Dashboard setActive={setActive} />}
         {active === "Categories" && <Categories />}
         {active === "Recipes" && <Recipes />}
         {active === "Orders" && <Orders />}

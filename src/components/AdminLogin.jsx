@@ -26,6 +26,7 @@ export default function AdminLogin({ onLogin }) {
         localStorage.setItem("adminEmail", data.email);
         onLogin(); // notify parent
       } else {
+        console.log(data);
         setError(data.error?.message || "Login failed");
       }
     } catch (err) {
@@ -63,7 +64,7 @@ export default function AdminLogin({ onLogin }) {
 
         <button
           type="submit"
-          className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition"
+          className="w-full bg-orange-500 cursor-pointer text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition"
         >
           Login
         </button>

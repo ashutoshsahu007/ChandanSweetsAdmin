@@ -1,5 +1,4 @@
-// src/components/AdminOrders.jsx
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const statusOptions = [
   "pending",
@@ -20,75 +19,125 @@ const statusColors = {
 };
 
 export default function AdminOrders() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState(() => {
+    // ✅ Initialize from cache only once
+    const cached = sessionStorage.getItem("orders");
+    return cached ? JSON.parse(cached) : [];
+  });
+  const [loading, setLoading] = useState(orders.length === 0);
+  const [filter, setFilter] = useState("all");
 
   const BASE_URL = "https://restro-a8f84-default-rtdb.firebaseio.com/orders";
 
-  // Fetch all orders
-  const fetchOrders = async () => {
+  // ✅ useCallback ensures the same function reference for setInterval
+  const fetchOrders = useCallback(async () => {
     try {
       const res = await fetch(`${BASE_URL}.json`);
+      if (!res.ok) throw new Error("Network error");
+
       const data = await res.json();
+      if (!data) return;
 
-      if (data) {
-        const loadedOrders = Object.entries(data).map(([id, order]) => ({
-          id,
-          ...order,
-        }));
+      const loadedOrders = Object.entries(data).map(([id, order]) => ({
+        id,
+        ...order,
+      }));
 
-        loadedOrders.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      // ✅ Sort by creation date (newest first)
+      loadedOrders.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      // ✅ Compare with cached data before updating state
+      const cached = sessionStorage.getItem("orders");
+      const cachedData = cached ? JSON.parse(cached) : [];
+
+      const isDifferent =
+        cachedData.length !== loadedOrders.length ||
+        cachedData.some(
+          (c, i) =>
+            c.id !== loadedOrders[i].id || c.status !== loadedOrders[i].status
         );
+
+      if (isDifferent) {
         setOrders(loadedOrders);
+        sessionStorage.setItem("orders", JSON.stringify(loadedOrders));
       }
     } catch (err) {
       console.error("Error fetching orders:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [BASE_URL]);
+
+  useEffect(() => {
+    fetchOrders(); // initial fetch
+    const interval = setInterval(fetchOrders, 5000); // ✅ poll for realtime updates
+    return () => clearInterval(interval);
+  }, [fetchOrders]);
 
   // Update order status
   const updateStatus = async (orderId, newStatus) => {
+    const prevOrders = orders;
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
+    );
+
     try {
-      await fetch(`${BASE_URL}/${orderId}.json`, {
+      const res = await fetch(`${BASE_URL}/${orderId}.json`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
 
-      // Update locally too
-      setOrders((prev) =>
-        prev.map((order) =>
-          order.id === orderId ? { ...order, status: newStatus } : order
-        )
-      );
+      if (!res.ok) throw new Error("Failed to update on server");
     } catch (err) {
       console.error("Error updating order:", err);
+      // rollback if needed
+      setOrders(prevOrders);
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 5000); // poll for realtime
-    return () => clearInterval(interval);
-  }, []);
+  const filterOrders =
+    filter == "all" ? orders : orders.filter((order) => order.status == filter);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-100 via-yellow-50 to-red-100 p-6">
+    <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-extrabold text-orange-600 mb-6">
+        <h1 className="text-3xl font-extrabold text-orange-600">
           🛠️ Admin Order Management
         </h1>
 
+        <div className="flex gap-6 py-4">
+          <button
+            onClick={() => setFilter("all")}
+            className={` ${
+              filter == "all" ? "bg-orange-500 text-white" : "bg-gray-300"
+            } px-3 py-1.5 rounded-lg cursor-pointer  font-medium capitalize`}
+          >
+            All
+          </button>
+          {statusOptions.map((item) => (
+            <button
+              onClick={() => setFilter(item)}
+              className={`${
+                filter == item ? `${statusColors[item]}` : "bg-gray-300"
+              }  px-3 py-1.5 cursor-pointer rounded-lg  font-medium capitalize`}
+            >
+              {item.replaceAll("_", " ")}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <p className="text-center text-gray-600">Loading orders...</p>
-        ) : orders.length === 0 ? (
+        ) : filterOrders.length === 0 ? (
           <p className="text-center text-gray-600">No orders found.</p>
         ) : (
           <div className="space-y-6">
-            {orders.map((order) => (
+            {filterOrders.map((order) => (
               <div
                 key={order.id}
                 className="bg-white border rounded-2xl p-5 shadow-md hover:shadow-lg transition"
@@ -135,7 +184,7 @@ export default function AdminOrders() {
                     >
                       {statusOptions.map((status) => (
                         <option key={status} value={status}>
-                          {status}
+                          {status.replaceAll("_", " ")}
                         </option>
                       ))}
                     </select>

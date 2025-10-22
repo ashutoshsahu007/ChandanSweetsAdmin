@@ -3,7 +3,7 @@ import { Tag, BookOpen, ClipboardList, Clock } from "lucide-react";
 
 const BASE_URL = "https://restro-a8f84-default-rtdb.firebaseio.com";
 
-export default function Dashboard() {
+export default function Dashboard({ setActive }) {
   const [stats, setStats] = useState({
     categories: 0,
     recipes: 0,
@@ -61,24 +61,28 @@ export default function Dashboard() {
       count: stats.categories,
       icon: <Tag className="text-gray-600" size={20} />,
       link: "View all categories",
+      active: "Categories",
     },
     {
       title: "Recipes",
       count: stats.recipes,
       icon: <BookOpen className="text-gray-600" size={20} />,
       link: "View all recipes",
+      active: "Recipes",
     },
     {
       title: "Total Orders",
       count: stats.totalOrders,
       icon: <ClipboardList className="text-gray-600" size={20} />,
       link: "View all orders",
+      active: "Orders",
     },
     {
       title: "Pending Orders",
       count: stats.pendingOrders,
       icon: <Clock className="text-gray-600" size={20} />,
       link: "View pending orders",
+      active: "Orders",
     },
   ];
 
@@ -88,19 +92,19 @@ export default function Dashboard() {
         {cards.map((stat, index) => (
           <div
             key={index}
-            className="bg-white shadow rounded-lg p-4 flex flex-col"
+            className="bg-white shadow rounded-lg p-4 flex flex-col items-start"
           >
             <div className="flex items-center gap-2">
               {stat.icon}
               <h2 className="font-medium">{stat.title}</h2>
             </div>
             <p className="text-2xl font-bold my-2">{stat.count}</p>
-            <a
-              href="#"
-              className="text-sm text-purple-600 hover:underline mt-auto"
+            <button
+              onClick={() => setActive(stat.active)}
+              className="text-sm text-purple-600 hover:underline mt-auto cursor-pointer"
             >
               {stat.link}
-            </a>
+            </button>
           </div>
         ))}
       </div>
